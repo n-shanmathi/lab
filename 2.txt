@@ -1,0 +1,29 @@
+VM-VM ping
+
+1)set the network configuration in both the vm's as Host only Adaptor
+2)Type ip a or ifconfig to get the IP addresses of both VM
+3)disable firewall by
+command:sudo ufw disable
+4)flush the iptables:
+command sudo iptables -F
+5)now ping <VM1_IP> on vm2
+6)now ping <VM2_IP> on VM1
+
+(if the vm's have same IP)
+then do the following in any one VM to change that ip:
+i)nmcli connection show
+it will show the connection name for example Wired connection 1.Use that name for the folling commands...
+ii)sudo nmcli connection modify "Wired connection 1" ipv4.addresses 10.0.3.16/24
+sudo nmcli connection modify "Wired connection 1" ipv4.method manual
+sudo nmcli connection down "Wired connection 1"
+sudo nmcli connection up "Wired connection 1"
+iii)ip -4 addr
+iv)ping another vm's IP command: ping <VM1_IP> from VM2
+v) now ping from VM1 command: ping 10.0.3.16 (the newly created IP)
+
+VM_NATIVE
+1)type ipconfig in windows
+2)type ip a of ifconfig in ubuntu
+3)obtain both ip address
+4)now type in windows command: ping <UBUNTU_IP>
+5)now type in Ubuntu command: ping <WINDOWS_IP>

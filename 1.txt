@@ -1,0 +1,103 @@
+1. ls - Lists files and directories in the current directory.
+2. cd -Changes the current working directory.
+3. pwd -Prints the current working directory path.
+4.mkdir-> creates a new directory
+5.rm -r <directory name> to delete directory
+  rm <filename> to delete files
+6. create a file touch <filename>
+7. copy the file content from source to destination
+     cp <sourcefilename> <destinationfilename>
+8.same for move change the keywork from cp to mv
+9.printinng the content of the file cat <filename>
+10.Terminal based text editors
+     nano <filename>
+11.grep search for patterns or keywords in files
+     greo "shan" <filename>
+here shan-word to be searched
+12. ps - display running process and also ps -aux can be used
+13. top -Displays system tasks and resource usage in real-time
+
+14.kill <pid> terminates a process using pid
+15. df -h Shows disk usage and free space of file systems.
+16. du Shows disk usage of files and directories.
+
+other commands:
+
+# 1. Check the current user
+whoami
+
+# 2. Switch to root user
+sudo -i
+
+# 3. Create a normal user
+adduser user1
+
+# 4. Set password for the user
+passwd user1
+
+# 5. Create a group
+groupadd projectgroup
+
+# 6. Add the normal user to the group
+usermod -aG projectgroup user1
+
+# 7. Give the user sudo/root privileges
+usermod -aG sudo user1
+
+# 8. Check the groups of the user
+groups user1
+
+# 9. Switch to the normal user
+su - user1
+
+# 10. Check the current user
+whoami
+
+# 11. Check whether the user has sudo permission
+sudo whoami
+
+# Output should be:
+# root
+
+
+# 12. Create a directory as root
+sudo mkdir /project
+
+# 13. Create a file
+sudo touch /project/test.txt
+
+# 14. Change the owner of the directory
+sudo chown user1:projectgroup /project
+
+# 15. Change the permissions
+sudo chmod 770 /project
+
+# 16. Check ownership and permissions
+ls -ld /project
+
+# Expected:
+# drwxrwx--- user1 projectgroup /project
+
+
+# 17. Give read, write and execute permission to owner
+sudo chmod u+rwx /project
+
+# 18. Give read and write permission to group
+sudo chmod g+rw /project
+
+# 19. Remove all permissions from others
+sudo chmod o-rwx /project
+
+# 20. Check permissions again
+ls -ld /project
+
+
+# 21. Remove sudo/root privileges from user1 if required
+sudo deluser user1 sudo
+
+# 22. Delete the normal user if required
+sudo deluser user1
+
+# 23. Delete the group if required
+sudo groupdel projectgroup
+

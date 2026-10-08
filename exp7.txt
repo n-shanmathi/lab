@@ -1,0 +1,221 @@
+
+ 7a) Configuration of HyperV on Windows of VMs
+
+
+ 1) Click Turn Windows features on or off.
+2) Find Hyper-V select all hyper -V and restart
+3) After your PC restarts Press the Windows key and search: Hyper-V Manager
+4) The hypervisor manager will open
+
+7b) Creation of VM, Powershell commands, Management
+
+1)open Tools-> hyper v manager-> right click on server and click create new vm
+2)Specify name and location click next.
+3. Now Specify generation 2
+3)Assign the memory for the vm(for safety give as 2gb )
+4)Conigure the network click on Default Switch
+5)Connect virtual harddisk click next
+6)Import the iso file which os need to install on the vm(here ubunttu)
+7)Click finish
+8) Change the Security setting - Change Template to MicrosoftUEFI
+9) we can start the the vm in hyper-V manager by using connect option in the right panel after starting the VM
+10)Once the VM starts it ask for setup and follow the steps in the screenshots :
+How would you like to install Ubuntu?(Type of installation)
+   Choose first option
+How do you want to install Ubuntu? (Disk Setup)
+  Choose first option
+Encryption and file system
+Choose first option
+Then create account
+
+After finishing all the steps it will start to install and it will ask to restart after restarting the ubuntu screen will appear
+
+Vm installation using Powershell Procedure :
+
+Get-VMSwitch
+
+1) Create vm with name and space in gb with virtual hard disk creation 
+Create the VM Using PowerShell
+Let's use:
+VM Name = Ubuntu-VM
+RAM     = 2 GB
+Disk    = 20 GB
+Switch  = Default Switch
+You can change the name if you want.
+Create the VM
+1)New-Item -ItemType Directory -Path “C:\Hyper-V” -Force
+2} New-VM -Name "Ubuntu-VM" -Generation 2 -MemoryStartupBytes 2GB -NewVHDPath "C:\Hyper-V\Ubuntu-VM.vhdx" -NewVHDSizeBytes 20GB -SwitchName "Default Switch"
+
+This creates:
+•	Generation 2 VM
+•	2 GB RAM
+•	20 GB virtual hard disk
+•	Connected to Default Switch
+Verify VM
+Get-VM
+Attach Ubuntu ISO
+First, know where your Ubuntu ISO is located.
+For example:
+C:\Users\Anish\Downloads\ubuntu.iso
+Step 6: Add DVD drive
+Add-VMDvdDrive -VMName "Ubuntu-VM" -Path "C:\Users\Anish\Downloads\ubuntu.iso"
+onfigure Secure Boot
+For Ubuntu on a Generation 2 Hyper-V VM:
+Step 7:
+Set-VMFirmware -VMName "Ubuntu-VM" -EnableSecureBoot On -SecureBootTemplate "MicrosoftUEFICertificateAuthority"
+Make ISO First Boot Device
+Step 8:
+Set-VMFirmware -VMName "Ubuntu-VM" -FirstBootDevice (Get-VMDvdDrive -VMName "Ubuntu-VM")
+Check:
+Get-VMFirmware -VMName "Ubuntu-VM"
+Start the VM
+Step 9:
+Start-VM -Name "Ubuntu-VM"
+Check status:
+Get-VM -Name "Ubuntu-VM"
+Expected:
+Name       State
+----       -----
+Ubuntu-VM  Running
+Connect to VM
+Step 10
+You can open Hyper-V Manager:
+virtmgmt.msc
+Then:
+Hyper-V Manager → Ubuntu-VM → Connect → Start
+Or try:
+vmconnect.exe localhost "Ubuntu-VM"
+Ubuntu installation screen should appear.
+PART 10 — Install Ubuntu
+Inside the VM, follow the Ubuntu installer.
+Choose approximately:
+Install Ubuntu
+↓
+Normal/Interactive Installation
+↓
+Erase disk and install Ubuntu
+↓
+No encryption
+↓
+Create username/password
+↓
+Install
+↓
+Restart
+After installation, if it boots from ISO again, remove the ISO:
+Remove-VMDvdDrive -VMName "Ubuntu-VM" -ControllerNumber 0 -ControllerLocation 1
+If that command complains about the location, first check:
+Get-VMDvdDrive -VMName "Ubuntu-VM"
+Then use the displayed ControllerNumber and ControllerLocation.
+PowerShell VM Management
+Check VM status
+Get-VM
+Or:
+Get-VM -Name "Ubuntu-VM"
+________________________________________
+Start VM
+Start-VM -Name "Ubuntu-VM"
+________________________________________
+Stop VM
+Stop-VM -Name "Ubuntu-VM"
+If you want to force it:
+Stop-VM -Name "Ubuntu-VM" -TurnOff
+Restart VM
+Restart-VM -Name "Ubuntu-VM"
+________________________________________
+Get detailed VM information
+Get-VM -Name "Ubuntu-VM" | Format-List *
+________________________________________
+Check VM memory
+Get-VMMemory -VMName "Ubuntu-VM"
+________________________________________
+Check VM network adapter
+Get-VMNetworkAdapter -VMName "Ubuntu-VM"
+________________________________________
+Check virtual hard disk
+Get-VMHardDiskDrive -VMName "Ubuntu-VM"
+
+Migration / Move VM Storage
+s Move → Move the virtual machine's storage → choose a new location. Ex.No.7
+First create a destination directory:
+New-Item -ItemType Directory -Path "C:\Hyper-V\Migrated" -Force
+Step 1: Move VM storage
+Move-VMStorage -VMName "Ubuntu-VM" -DestinationStoragePath "C:\Hyper-V\Migrated"
+Wait until it completes.
+Step 2: Verify
+Get-VMHardDiskDrive -VMName "Ubuntu-VM"
+You should see the VHDX under the new location.
+Final Verification
+Run these:
+Get-VM
+Get-VMSwitch
+Get-VMNetworkAdapter -VMName "Ubuntu-VM"
+Get-VMHardDiskDrive -VMName "Ubuntu-VM"
+Finally:
+Start-VM -Name "Ubuntu-VM"
+and:
+vmconnect.exe localhost "Ubuntu-VM"
+If Ubuntu opens, your experiment is completed.
+
+If you want the shortest command sequence
+You can basically do the PowerShell portion in this order:
+# 1. Check Hyper-V
+Get-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V
+
+# 2. Enable Hyper-V if disabled
+Enable-WindowsOptionalFeature -Online -FeatureName Microsoft-Hyper-V -All
+
+# 3. Restart if required
+Restart-Computer
+After restart:
+# 4. Check switch
+Get-VMSwitch
+
+# 5. Create VM
+New-VM -Name "Ubuntu-VM" -Generation 2 -MemoryStartupBytes 2GB -NewVHDPath "C:\Hyper-V\Ubuntu-VM.vhdx" -NewVHDSizeBytes 20GB -SwitchName "Default Switch"
+
+# 6. Attach Ubuntu ISO
+Add-VMDvdDrive -VMName "Ubuntu-VM" -Path "C:\Users\Anish\Downloads\ubuntu.iso"
+
+# 7. Configure Secure Boot
+Set-VMFirmware -VMName "Ubuntu-VM" -EnableSecureBoot On -SecureBootTemplate "MicrosoftUEFICertificateAuthority"
+
+# 8. Boot from ISO
+Set-VMFirmware -VMName "Ubuntu-VM" -FirstBootDevice (Get-VMDvdDrive -VMName "Ubuntu-VM")
+
+# 9. Start
+Start-VM -Name "Ubuntu-VM"
+
+# 10. Check
+Get-VM
+
+# 11. Connect
+vmconnect.exe localhost "Ubuntu-VM"
+Then after Ubuntu installation:
+# VM management
+Get-VM
+Start-VM -Name "Ubuntu-VM"
+Stop-VM -Name "Ubuntu-VM"
+Restart-VM -Name "Ubuntu-VM"
+
+# VM information
+Get-VMNetworkAdapter -VMName "Ubuntu-VM"
+Get-VMHardDiskDrive -VMName "Ubuntu-VM"
+
+# Migration
+New-Item -ItemType Directory -Path "C:\Hyper-V\Migrated" -Force
+Move-VMStorage -VMName "Ubuntu-VM" -DestinationStoragePath "C:\Hyper-V\Migrated"
+
+
+
+
+
+
+
+
+
+
+
+8) Installation of OpenStack and creation of Virtual machines
+
+1)Update all the file in the ubunttu by sudo apt update

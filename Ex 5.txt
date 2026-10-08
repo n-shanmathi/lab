@@ -1,0 +1,134 @@
+Ex 5.a
+KVM (Kernel-based Virtual Machine)
+KVM (Kernel-based Virtual Machine) is an open-source virtualization technology built into the Linux kernel. It turns Linux into a Type-1 hypervisor that allows you to run multiple virtual machines (VMs) on a physical host.
+1. Check Hardware Virtualization Support
+Check whether the system supports hardware virtualization using:
+egrep -c 'lm' /proc/cpuinfo
+
+Output ≥ 1 indicates support. If the output is 0, the CPU does not support hardware virtualization.
+2. Check Kernel Information
+Run uname -a, which displays the kernel name, hostname, kernel version, build date, architecture, and OS type in one line.
+uname -a
+
+3. List KVM Kernel Module Files
+To list the KVM kernel module files present in the kernel, run:
+ls /lib/modules/5.4.0-84-generic/kernel/arch/x86/kvm/kvm\*
+
+KVM Installation
+4. Install Required Packages
+Install the required KVM, QEMU, libvirt, bridge, and Virtual Machine Manager packages:
+sudo apt-get install qemu-kvm libvirt-bin bridge-utils qemu-system virt-manager
+
+5. Configure the Libvirt Daemon
+Configure the libvirt daemon configuration file for remote access and socket permissions in KVM/libvirt.
+Open the configuration file:
+sudo nano /etc/libvirt/libvirtd.conf
+
+To display the uncommented configuration lines:
+grep ^[^#] /etc/libvirt/libvirtd.conf
+
+6. Restart the Libvirt Service
+After configuring the libvirt daemon, restart the libvirt service:
+sudo systemctl restart libvirtd
+
+7. List Running Virtual Machines
+Run virsh list to display the virtual machines currently running:
+virsh list
+
+8. Connect to the Virtualization Interactive Terminal
+Start the virsh interactive terminal:
+virsh
+
+9. Get Version of Libvirt and QEMU
+Inside the virsh terminal, run:
+virsh # version
+
+This displays the version information of libvirt and QEMU.
+10. Get Node Information
+Inside the virsh terminal, run:
+virsh # nodeinfo
+
+This displays information about the virtualization host/node.
+Importing an Existing Virtual Machine
+11. Open Virtual Machine Manager
+Go to Virtual Machine Manager (virt-manager) in your Linux system.
+1. Right-click QEMU/KVM.
+2. Select New to create a new virtual machine.
+12. Import an Existing Disk Image
+Select Import existing disk image and click Forward.
+13. Download the CirrOS Disk Image
+Download the CirrOS disk image from:
+https://download.cirros-cloud.net/0.5.1/
+Give the path of the downloaded CirrOS disk image and click Forward.
+14. Configure Memory and CPU
+Choose the required memory and CPU settings, and click Forward.
+15. Name the Virtual Machine
+Enter a suitable name for the virtual machine and click Finish.
+16. Boot the Virtual Machine
+The VM is booted successfully and the login is also successful.
+
+Ex 5.b - KVM – Create Images from ISO, Image Resizing, and Image Conversion
+
+Creating VM Image from ISO
+
+1. Go to Virtual Machine Manager (virt-manager) in your Linux system. Right-click QEMU/KVM and select New to create a new VM.
+
+2. Select Local install media (ISO image or CDROM).
+
+3. Download Ubuntu Server ISO from:
+https://releases.ubuntu.com/16.04/
+
+4. Select the downloaded Ubuntu Server ISO path and click Forward.
+
+5. Specify the memory and CPU required and click Forward.
+
+6. Run the command:
+qemu-img create -f qcow2 ubuntu_vm.qcow2 10G
+
+7. Name the VM and click Finish.
+
+8. Select the language.
+
+9. Select Install Ubuntu Server and then the VM boots.
+
+10. Select the language and location.
+
+11. Set the keyboard configuration.
+
+12. Set hostname, username, password and clock settings.
+
+13. Set the disk partition.
+
+14. Select Yes to write the changes to disks.
+
+15. The system installation starts.
+
+16. For HTTP proxy, just click Enter.
+
+17. Select No automatic updates option for configuring tasksel.
+
+18. In Software Selection, select using Spacebar Standard system utilities and OpenSSH server.
+
+19. Select Yes to install GRUB boot loader.
+
+20. Login to the VM.
+
+Image Resizing
+
+21. Shut down the VM if it is running.
+
+22. Resize the QCOW2 image:
+sudo qemu-img resize ubuntu_vm.qcow2 +10G
+
+23. Resize partitions inside the VM:
+sudo growpart /dev/sda1
+sudo resize2fs /dev/sda1
+
+
+Image Conversion
+24. QCOW2 to VDI:
+qemu-img convert -O vdi ubuntu_vm.qcow2 ubuntu_vm.vdi -p
+25. QCOW2 to VHD:
+qemu-img convert -O vpc ubuntu_vm.qcow2 ubuntu_vm.vhd -p
+26. QCOW2 to IMG:
+qemu-img convert -O raw ubuntu_vm.qcow2 ubuntu_vm.img -p

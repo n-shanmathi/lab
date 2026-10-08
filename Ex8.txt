@@ -1,0 +1,108 @@
+Experiment 8 — OpenStack Installation & VM Creation
+Step 1 — Update Ubuntu packages
+Command:
+sudo apt update
+Step 2 — Install required packages
+Command:
+sudo apt install -y git curl wget net-tools iproute2 python3-pip python3-venv build-essential libssl-dev
+Step 3 — Create the stack user
+Command:
+sudo adduser --shell /bin/bash --home /opt/stack stack
+Step 4 — Give sudo privilege to stack
+Command:
+echo "stack ALL=(ALL) NOPASSWD: ALL" | sudo tee /etc/sudoers.d/stack
+Step 5 — Set permissions for stack
+Command:
+sudo chmod 0440 /etc/sudoers.d/stack
+Steps 3–5 correspond to the user creation, passwordless sudo, and permissions described in the PDF. exp 8.pdf
+Step 6 — Switch to the stack user
+Command:
+sudo su - stack
+Step 7 — Clone DevStack from Git
+Command:
+git clone https://git.openstack.org/openstack/devstack
+Step 8 — Go to the DevStack directory
+Command:
+cd devstack
+The PDF uses the stack user, clones DevStack, and then enters the devstack directory. exp 8.pdf
+Step 9 — Create/Edit local.conf
+Command:
+nano local.conf
+Enter:
+[[local|localrc]]
+
+ADMIN_PASSWORD=yourpassword
+DATABASE_PASSWORD=yourpassword
+RABBIT_PASSWORD=yourpassword
+SERVICE_PASSWORD=yourpassword
+DEST=/opt/stack
+HOST_IP=YOUR_IP_ADDRESS
+Replace YOUR_IP_ADDRESS with your Ubuntu machine's IP.
+To find your IP:
+hostname -I
+The PDF shows these configuration fields in local.conf. exp 8.pdf
+Save:
+Ctrl + O
+Enter
+Ctrl + X
+Step 10 — Install/Run OpenStack DevStack
+Command:
+./stack.sh
+Wait for the installation to complete. exp 8.pdf
+Step 11 — Open OpenStack Dashboard
+Open your browser and enter:
+http://YOUR_IP_ADDRESS/dashboard
+Login with:
+Username: admin
+Password: yourpassword
+The password should match the ADMIN_PASSWORD you configured in local.conf. exp 8.pdf
+VM Creation
+Step 12 — Load OpenStack credentials
+Go back to the terminal.
+Command:
+source openrc admin admin
+Step 13 — Check available images
+Command:
+openstack image list
+Note the Image Name or ID you want to use.
+Step 14 — Check available flavors
+Command:
+openstack flavor list
+Note the Flavor Name or ID you want to use.
+The PDF specifically asks you to check both image and flavor before creating the VM. exp 8.pdf
+Step 15 — Create a key pair
+Command:
+openstack keypair create mykey > mykey.pem
+Step 16 — Set key permissions
+Command:
+chmod 600 mykey.pem
+These are the key-pair commands given in the PDF. exp 8.pdf
+Step 17 — Check available networks
+Command:
+openstack network list
+Note the Network ID. exp 8.pdf
+Step 18 — Create the Virtual Machine
+Command:
+openstack server create 
+ --image <image_name_or_id> 
+ --flavor <flavor_name_or_id> 
+ --nic net-id=<network_id> 
+ --key-name mykey 
+ my-first-vm
+Replace:
+<image_name_or_id> → your image
+<flavor_name_or_id> → your flavor
+<network_id> → your network ID
+This is the VM creation command from your experiment. exp 8.pdf
+Step 19 — Check VM status and IP
+Command:
+openstack server list
+Look for:
+my-first-vm
+Check that its status is:
+ACTIVE
+and note its IP address. exp 8.pdf
+Step 20 — Access the VM using SSH
+Command:
+ssh -i mykey.pem cirros@<vm_public_ip>
+Replace <vm_public_ip> with the IP address obtained in Step 19. exp 8.pdf

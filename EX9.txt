@@ -1,0 +1,353 @@
+sudo -s
+
+ip netns add VRF1
+ip netns add VRF2
+
+ip link add veth1 type veth peer name veth2
+ip link add veth3 type veth peer name veth4
+
+ip link set veth1 netns VRF1
+ip link set veth3 netns VRF2
+
+ip netns exec VRF1 ip addr add 10.10.10.1/24 dev veth1
+ip netns exec VRF2 ip addr add 10.10.10.2/24 dev veth3
+
+ip netns exec VRF1 ip link set lo up
+ip netns exec VRF1 ip link set veth1 up
+
+ip netns exec VRF2 ip link set lo up
+ip netns exec VRF2 ip link set veth3 up
+
+ip link set veth2 up
+ip link set veth4 up
+
+apt update
+apt install openvswitch-switch openvswitch-common -y
+
+systemctl start openvswitch-switch
+systemctl enable openvswitch-switch
+
+ovs-vsctl add-br vSwitch1
+
+ovs-vsctl add-port vSwitch1 veth2
+ovs-vsctl add-port vSwitch1 veth4
+
+ovs-vsctl show
+
+ip netns exec VRF1 ping 10.10.10.2
+
+
+------------------------------------------------------------------------------------------------------------------------------------
+
+
+1. Enter the root user
+First open the Ubuntu terminal and switch to the root user:
+sudo -s
+
+You should see:
+root@ubuntu:/home/user#
+
+Why?
+Most OVS, network namespace, virtual Ethernet, and interface configuration commands require administrator/root privileges.
+2. Create two network namespaces
+Create two isolated network environments called VRF1 and VRF2.
+ip netns add VRF1
+ip netns add VRF2
+
+Check whether they were created:
+ip netns list
+
+Expected:
+VRF1
+VRF2
+
+What is a network namespace?
+A network namespace provides an isolated networking environment with its own:
+- Network interfaces
+- IP addresses
+- Routing table
+- ARP table
+- Network configuration
+So we can treat VRF1 and VRF2 like two separate virtual machines.
+Your record uses these two namespaces as the endpoints that will communicate through OVS. 917722IT043_KESHOKUMAR D_9
+3. Create virtual Ethernet pairs
+Now create four virtual Ethernet interfaces.
+A veth pair is like a virtual network cable. Anything transmitted through one end appears at the other end.
+Run:
+ip link add veth1 type veth peer name veth2
+
+Create another pair:
+ip link add veth3 type veth peer name veth4
+
+You now have:
+veth1 <---- virtual cable ----> veth2
+
+veth3 <---- virtual cable ----> veth4
+
+Check them:
+ip link
+
+4. Understand the topology
+The idea is to connect the namespaces through the OVS bridge.
+Conceptually:
+        VRF1
+         |
+       veth1
+         |
+         |
+      veth2
+         |
+   +-------------+
+   | Open vSwitch|
+   |   vSwitch1  |
+   +-------------+
+         |
+       veth4
+         |
+       veth3
+         |
+        VRF2
+
+The exact veth-to-namespace assignments are important because one end of each pair remains available to connect to OVS.
+Your record shows the topology being constructed with four veth interfaces before assigning them to the namespaces. 917722IT043_KESHOKUMAR D_9
+5. Assign veth interfaces to namespaces
+Move one end of each veth pair into the appropriate namespace.
+For example:
+ip link set veth1 netns VRF1
+ip link set veth3 netns VRF2
+
+Now:
+VRF1:
+    veth1
+
+Host:
+    veth2
+    veth4
+
+VRF2:
+    veth3
+
+Check the interfaces inside VRF1:
+ip netns exec VRF1 ip link
+
+Check VRF2:
+ip netns exec VRF2 ip link
+
+The uploaded record specifically verifies that veth1 is attached to VRF1. 917722IT043_KESHOKUMAR D_9
+6. Assign IP addresses
+Now give the namespace interfaces IP addresses.
+For VRF1:
+ip netns exec VRF1 ip addr add 10.10.10.1/24 dev veth1
+
+For VRF2:
+ip netns exec VRF2 ip addr add 10.10.10.2/24 dev veth3
+
+This gives:
+VRF1 → 10.10.10.1
+VRF2 → 10.10.10.2
+
+Both are in:
+10.10.10.0/24
+
+Therefore, they can communicate directly at Layer 2 once the OVS bridge connects them.
+Your record's Step 6 is to assign IP addresses to the virtual Ethernet ports. 917722IT043_KESHOKUMAR D_9
+7. Bring the interfaces UP
+The virtual interfaces need to be enabled.
+Inside VRF1:
+ip netns exec VRF1 ip link set veth1 up
+
+Inside VRF2:
+ip netns exec VRF2 ip link set veth3 up
+
+Also bring the loopback interfaces up:
+ip netns exec VRF1 ip link set lo up
+ip netns exec VRF2 ip link set lo up
+
+On the host, bring the other veth interfaces up:
+ip link set veth2 up
+ip link set veth4 up
+
+8. Check the routing configuration
+Check VRF1:
+ip netns exec VRF1 ip route
+
+You should see something similar to:
+10.10.10.0/24 dev veth1
+
+Check VRF2:
+ip netns exec VRF2 ip route
+
+You should see:
+10.10.10.0/24 dev veth3
+
+The lab record also performs this verification before installing OVS. 917722IT043_KESHOKUMAR D_9
+9. Install Open vSwitch
+Install OVS and its dependencies:
+apt update
+apt install openvswitch-switch openvswitch-common -y
+
+Your record uses the same OVS packages in Step 8. 917722IT043_KESHOKUMAR D_9
+Check the OVS version:
+ovs-vsctl --version
+
+You should get output similar to:
+ovs-vsctl (Open vSwitch) ...
+
+10. Start/check the Open vSwitch service
+Check the service:
+systemctl status openvswitch-switch
+
+If it is not running:
+systemctl start openvswitch-switch
+
+Enable it to start automatically after reboot:
+systemctl enable openvswitch-switch
+
+Check again:
+systemctl status openvswitch-switch
+
+You want to see:
+Active: active (running)
+
+This corresponds to Step 9 in your record. 917722IT043_KESHOKUMAR D_9
+11. Create the OVS bridge
+Now create the virtual switch.
+ovs-vsctl add-br vSwitch1
+
+Here:
+vSwitch1
+
+is the name of the OVS bridge/switch.
+Check it:
+ovs-vsctl show
+
+You should see something similar to:
+Bridge vSwitch1
+    Port vSwitch1
+        Interface vSwitch1
+            type: internal
+
+Your lab record performs exactly this operation in Step 10. 917722IT043_KESHOKUMAR D_9
+12. Add the virtual Ethernet ports to OVS
+Now connect the host-side veth interfaces to the OVS bridge.
+Add veth2:
+ovs-vsctl add-port vSwitch1 veth2
+
+Add veth4:
+ovs-vsctl add-port vSwitch1 veth4
+
+Now the topology becomes:
+VRF1
+ |
+veth1
+ |
+veth2
+ |
+ +-------------------+
+ |     vSwitch1      |
+ |    Open vSwitch   |
+ +-------------------+
+ |
+veth4
+ |
+veth3
+ |
+VRF2
+
+Verify:
+ovs-vsctl show
+
+You should see:
+Bridge vSwitch1
+    Port veth2
+        Interface veth2
+
+    Port veth4
+        Interface veth4
+
+This is the main step where the OVS virtual switch is connected to the virtual network endpoints. 917722IT043_KESHOKUMAR D_9
+13. Bring the OVS ports UP
+Make sure the host-side interfaces are active:
+ip link set veth2 up
+ip link set veth4 up
+
+Check:
+ip link show veth2
+ip link show veth4
+
+You should see:
+state UP
+
+Your record's Step 11 also brings the virtual Ethernet ports up and checks their status. 917722IT043_KESHOKUMAR D_9
+14. Check OVS configuration
+Run:
+ovs-vsctl show
+
+A successful configuration should resemble:
+Bridge "vSwitch1"
+    Port "veth2"
+        Interface "veth2"
+    Port "veth4"
+        Interface "veth4"
+
+You can also check the OVS ports:
+ovs-vsctl list-ports vSwitch1
+
+Expected:
+veth2
+veth4
+
+15. Test communication using ping
+This is the most important verification.
+From VRF1, ping VRF2:
+ip netns exec VRF1 ping 10.10.10.2
+
+Expected:
+64 bytes from 10.10.10.2: icmp_seq=1 ttl=64 time=...
+64 bytes from 10.10.10.2: icmp_seq=2 ttl=64 time=...
+64 bytes from 10.10.10.2: icmp_seq=3 ttl=64 time=...
+
+Stop it with:
+Ctrl+C
+
+Your uploaded record uses this exact type of test in Step 12 and demonstrates successful packets between the two namespaces. 917722IT043_KESHOKUMAR D_9
+What does this prove?
+It proves that:
+VRF1
+ ↓
+veth1
+ ↓
+veth2
+ ↓
+Open vSwitch
+ ↓
+veth4
+ ↓
+veth3
+ ↓
+VRF2
+
+is functioning correctly.
+16. Enable Spanning Tree Protocol — Optional
+If your topology contains multiple possible paths, you can enable STP to help prevent Layer-2 loops.
+ovs-vsctl set bridge vSwitch1 stp_enable=true
+
+Check the configuration:
+ovs-vsctl list bridge vSwitch1
+
+Or:
+ovsdb-client dump
+
+Your record lists STP as an optional Step 13 to prevent broadcast storms and network loops. 917722IT043_KESHOKUMAR D_9
+17. Check MAC addresses
+Finally, verify the MAC addresses associated with the OVS switch and namespace interfaces.
+Check OVS:
+ovs-appctl fdb/show vSwitch1
+
+Check VRF1:
+ip netns exec VRF1 ip link show veth1
+
+Check VRF2:
+ip netns exec VRF2 ip link show veth3
+
+You should be able to observe the MAC addresses and verify that the virtual network devices are correctly connected.

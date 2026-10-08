@@ -1,0 +1,176 @@
+METHOD 2: SHARED FOLDER FILE TRANSFER
+
+STEP 1: CREATE SHARED FOLDER
+
+Create a folder on the Windows host:
+C:\VMShared
+
+Add a file:
+hi.txt
+
+
+STEP 2: CONFIGURE SHARED FOLDER FOR VM1
+
+Shut down VM1.
+
+Open:
+VirtualBox → Select VM1 → Settings → Shared Folders → Add (+)
+
+Set:
+Folder Path: C:\VMShared
+Folder Name: VMShared
+Auto-mount: ✓
+Make Global: ✗
+Read-only: ✗
+
+Click OK → OK.
+
+
+STEP 3: CHECK GUEST ADDITIONS
+
+Start VM1.
+
+Check whether Guest Additions is already installed:
+
+lsmod | grep vbox
+
+If the output contains:
+vboxguest
+vboxsf
+
+then Guest Additions is already available and the Guest Additions CD does not need to be inserted again.
+
+If Guest Additions is not installed:
+VirtualBox → Devices → Insert Guest Additions CD Image
+Then install Guest Additions.
+
+
+STEP 4: MOUNT SHARED FOLDER IN VM1
+
+Create a mount point:
+
+sudo mkdir -p /mnt/shared
+
+Mount the shared folder:
+
+sudo mount -t vboxsf VMShared /mnt/shared
+
+Check the shared folder:
+
+ls -l /mnt/shared
+
+Expected:
+hi.txt
+
+
+STEP 5: CONFIGURE SHARED FOLDER FOR VM2
+
+Shut down VM2.
+
+Open:
+VirtualBox → Select VM2 → Settings → Shared Folders → Add (+)
+
+Set:
+Folder Path: C:\VMShared
+Folder Name: VMShared
+Auto-mount: ✓
+Make Global: ✗
+Read-only: ✗
+
+Click OK → OK.
+
+
+STEP 6: CHECK GUEST ADDITIONS IN VM2
+
+Start VM2.
+
+Run:
+
+lsmod | grep vbox
+
+If the output contains:
+vboxguest
+vboxsf
+
+Guest Additions is already installed.
+
+No need to insert the Guest Additions CD again.
+
+If it is not installed:
+VirtualBox → Devices → Insert Guest Additions CD Image
+Then install Guest Additions.
+
+
+STEP 7: MOUNT SHARED FOLDER IN VM2
+
+Create a mount point:
+
+sudo mkdir -p /mnt/shared
+
+Mount the shared folder:
+
+sudo mount -t vboxsf VMShared /mnt/shared
+
+Check:
+
+ls -l /mnt/shared
+
+Expected:
+hi.txt
+
+
+STEP 8: TRANSFER FILE FROM VM1 TO VM2
+
+On VM1:
+
+echo "Hello from VM1" > /mnt/shared/VM1.txt
+
+Check:
+
+ls -l /mnt/shared
+
+
+STEP 9: VERIFY FILE IN VM2
+
+On VM2:
+
+ls -l /mnt/shared
+
+Read the file:
+
+cat /mnt/shared/VM1.txt
+
+Expected output:
+
+Hello from VM1
+
+
+STEP 10: TRANSFER FILE FROM VM2 TO VM1
+
+On VM2:
+
+echo "Hello from VM2" > /mnt/shared/VM2.txt
+
+Check:
+
+ls -l /mnt/shared
+
+
+STEP 11: VERIFY FILE IN VM1
+
+On VM1:
+
+ls -l /mnt/shared
+
+Read the file:
+
+cat /mnt/shared/VM2.txt
+
+Expected output:
+
+Hello from VM2
+
+
+RESULT:
+
+The VirtualBox shared folder C:\VMShared was successfully accessed by both VM1 and VM2. Files created in the shared folder from one VM were visible and accessible from the other VM, demonstrating file transfer between the virtual machines through a shared folder.

@@ -1,0 +1,19 @@
+public class keshav
+{
+    public static void main(String args[])
+    {
+        long s = System.nanoTime();
+
+        for(long i=0; i<1000000000L; i++)
+        {
+            sum++;
+        }
+
+        long e = System.nanoTime();
+
+        double ds = (e-s)/1000000000.0;
+
+        System.out.println("sum = " + sum);
+        System.out.println("Execution time: " + ds + " seconds");
+    }
+}
