@@ -1,0 +1,51 @@
+# 1. Install required packages
+sudo apt update
+sudo apt install net-tools
+sudo apt install bridge-utils
+
+# 2. Load bridge modules
+sudo modprobe bridge
+sudo modprobe br_netfilter
+
+# 3. Check network interface
+ifconfig
+
+# 4. Edit Netplan configuration
+sudo nano /etc/netplan/01-netcfg.yaml
+
+# Put this inside the file:
+#
+# network:
+#   version: 2
+#   renderer: networkd
+#
+#   ethernets:
+#     enp0s3:
+#       dhcp4: no
+#
+#   bridges:
+#     br-cloud:
+#       interfaces: [enp0s3]
+#       addresses:
+#         - 10.0.2.15/24
+#       routes:
+#         - to: default
+#           via: 10.0.2.2
+#       nameservers:
+#         addresses:
+#           - 8.8.8.8
+#           - 1.1.1.1
+
+# Save: Ctrl+O → Enter → Ctrl+X
+
+# 5. Set permissions
+sudo chmod 600 /etc/netplan/01-netcfg.yaml
+
+# 6. Apply network configuration
+sudo netplan try
+sudo netplan apply
+
+# 7. Verify the bridge
+ip a
+route -n
+brctl show
